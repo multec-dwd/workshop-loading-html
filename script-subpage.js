@@ -3,7 +3,7 @@ devel: true,
 browser: true,
 jquery: true
 */
-var subpages = []; //globale array met URL's van de subpages
+var subpages = [];
 
 $(document).ready(function() {
     var sendData = {url: 'http://www.abconcerts.be/nl/agenda/'};
@@ -18,6 +18,7 @@ $(document).ready(function() {
 });
 
 var successHandler = function(data) {
+    data = data.replace(/src/gi,'source'); //prevent images from being loaded by changing the src attribute into a source attribute
     var $html = $(data); 
     //window.$html = $html; //make $html global for testing
     
@@ -27,7 +28,7 @@ var successHandler = function(data) {
     $html.find('.item').each(function(i, eventItem){
         
         var $eventItem = $(eventItem);
-        var imgSrc = $eventItem.find('img').attr('src')
+        var imgSrc = $eventItem.find('img').attr('source')
                         .replace(/overview/, 'header')
                         .replace(/small/,'large');
         var date = $eventItem.parent().parent().prev().text();
@@ -39,7 +40,7 @@ var successHandler = function(data) {
         htmlString += '<img src="' + imgSrc + '">';
         htmlString += '<h1>' + $eventItem.find('.title').text() + '</h1>';
         htmlString += '<h2>' + date + '</h2>';
-        //htmlString += '<p>' + genre + '</p>'; //genre zit in een subpagina, dus kan hier niet worden toegevoegd
+        //htmlString += '<p>' + genre + '</p>'; //genre is inside a subpagina / detail page
         htmlString += '</section>';
         
         loadSubPage(urlSubpage);
@@ -55,23 +56,25 @@ var loadSubPage = function(urlSubpage){
         data: sendData,
         type: 'POST',
         error: function(err) {console.dir(err);},
-        success: successHandlerSubPage
+        success: successHandlerSub
     });
 };
 
-var successHandlerSubPage = function(data){
-    var loadedUrl = this.data.substr(4); //url huidige ajax request
+var successHandlerSub = function(data){
+    data = data.replace(/src/gi,'source'); //prevent images from being loaded by changing the src attribute into a source attribute
+    var loadedUrl = this.data.substr(4); //url current ajax request
     loadedUrl = decodeURIComponent(loadedUrl).replace(/\++/g, ' '); //decoding special chars in url
     var index;
     
     $.each(subpages, function(i, urlSubpage){
         if(loadedUrl === urlSubpage) {
             index = i;
-            return false; //indien gevonden, stop each loop
+            return false; //if found, stop each loop
         }
     });
     
     var $html = $(data);
+    //window.$html = $html;
     var genre = $html.find(".info:contains('Genre')").html();
     $(".event").eq(index).append('<p>' + genre + '</p>');
 };
