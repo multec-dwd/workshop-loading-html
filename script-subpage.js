@@ -3,8 +3,6 @@ devel: true,
 browser: true,
 jquery: true
 */
-var subpages = [];
-
 $(document).ready(function() {
     var sendData = {url: 'http://www.abconcerts.be/nl/agenda/'};
     $.ajax({
@@ -33,7 +31,6 @@ var successHandler = function(data) {
                         .replace(/small/,'large');
         var date = $eventItem.parent().parent().prev().text();
         var urlSubpage = $eventItem.attr('href');
-        subpages.push(urlSubpage);
         
         
         htmlString += '<section class="event">'; //style="background: url(' + imgSrc +');">';
@@ -43,15 +40,16 @@ var successHandler = function(data) {
         //htmlString += '<p>' + genre + '</p>'; //genre is inside a subpagina / detail page
         htmlString += '</section>';
         
-        loadSubPage(urlSubpage);
+        loadSubPage(urlSubpage,i);
     });
     
     $(document.body).append(htmlString);
 };
 
-var loadSubPage = function(urlSubpage){
+var loadSubPage = function(urlSubpage, i){
     var sendData = {url: urlSubpage};
     $.ajax({
+        index: i,
         url: 'crosscall.php',
         data: sendData,
         type: 'POST',
@@ -62,19 +60,6 @@ var loadSubPage = function(urlSubpage){
 
 var successHandlerSub = function(data){
     data = data.replace(/src/gi,'source'); //prevent images from being loaded by changing the src attribute into a source attribute
-    var loadedUrl = this.data.substr(4); //url current ajax request
-    loadedUrl = decodeURIComponent(loadedUrl).replace(/\++/g, ' '); //decoding special chars in url
-    var index;
-    
-    $.each(subpages, function(i, urlSubpage){
-        if(loadedUrl === urlSubpage) {
-            index = i;
-            return false; //if found, stop each loop
-        }
-    });
-    
-    var $html = $(data);
-    //window.$html = $html;
-    var genre = $html.find(".info:contains('Genre')").html();
-    $(".event").eq(index).append('<p>' + genre + '</p>');
+    var genre = $(data).find(".info:contains('Genre')").html();
+    $(".event").eq(this.index).append('<p>' + genre + '</p>');
 };
